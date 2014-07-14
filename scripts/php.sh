@@ -12,7 +12,8 @@ if [[ $2 == "true" ]]; then
     sudo apt-get update
 
     # Install HHVM
-    sudo apt-get install -y hhvm
+    # -qq implies -y --force-yes
+    sudo apt-get install -qq hhvm
 
     # Start on system boot
     sudo update-rc.d hhvm defaults
@@ -24,19 +25,30 @@ if [[ $2 == "true" ]]; then
 else
     echo ">>> Installing PHP"
 
+    sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 4F4EA0AAE5267A6C
     sudo add-apt-repository -y ppa:ondrej/php5
 
     sudo apt-key update
     sudo apt-get update
 
     # Install PHP
-    sudo apt-get install --force-yes -y php5-cli php5-fpm php5-mysql php5-pgsql php5-sqlite php5-curl php5-gd php5-gmp php5-mcrypt php5-xdebug php5-memcached php5-imagick php5-intl
+    # -qq implies -y --force-yes
+    sudo apt-get install -qq php5-cli php5-fpm php5-mysql php5-pgsql php5-sqlite php5-curl php5-gd php5-gmp php5-mcrypt php5-xdebug php5-memcached php5-imagick php5-intl
 
     # Set PHP FPM to listen on TCP instead of Socket
     sudo sed -i "s/listen =.*/listen = 127.0.0.1:9000/" /etc/php5/fpm/pool.d/www.conf
 
     # Set PHP FPM allowed clients IP address
     sudo sed -i "s/;listen.allowed_clients/listen.allowed_clients/" /etc/php5/fpm/pool.d/www.conf
+
+    # Set run-as user for PHP5-FPM processes to user/group "vagrant"
+    # to avoid permission errors from apps writing to files
+    sudo sed -i "s/user = www-data/user = vagrant/" /etc/php5/fpm/pool.d/www.conf
+    sudo sed -i "s/group = www-data/group = vagrant/" /etc/php5/fpm/pool.d/www.conf
+
+    sudo sed -i "s/listen\.owner.*/listen.owner = vagrant/" /etc/php5/fpm/pool.d/www.conf
+    sudo sed -i "s/listen\.group.*/listen.group = vagrant/" /etc/php5/fpm/pool.d/www.conf
+    sudo sed -i "s/listen\.mode.*/listen.mode = 0666/" /etc/php5/fpm/pool.d/www.conf
 
 
     # xdebug Config
